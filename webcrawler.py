@@ -1,27 +1,45 @@
+import re
 import requests
 
 from bs4 import BeautifulSoup
 
 
 def parse_html(html, **kwargs):
-    parsed_html = BeautifulSoup(html, 'lxml')
+    is_wikipedia_page = kwargs.get('is_wikipedia_page')
+    parsed_html = BeautifulSoup(html, 'html.parser')
 
     headline = parsed_html.body.find('h1')
     paragraph = None
 
-    # Parse Paragraph
-    content_container = parsed_html.body.find(
-        'div',
-        attrs={'id': 'bodyContent'}
-    )
-    for p in content_container.findAll('p'):
-        if not p.findParents('table'):
-            paragraph = p
-            break
+    if is_wikipedia_page:
+        # Parse Paragraph
+        content_container = parsed_html.body.find(
+            'div',
+            attrs={'id': 'bodyContent'}
+        )
+        for p in content_container.findAll('p'):
+            if not p.findParents('table'):
+                paragraph = p
+                break
 
-    # Parse Image
-    infobox = parsed_html.body.find('table', attrs={'class': 'infobox'})
-    image = infobox.find('img') if infobox else None
+        # Parse Image
+        infobox = parsed_html.body.find('table', attrs={'class': 'infobox'})
+        image = infobox.find('img') if infobox else None
+    else:
+        content_container_class = kwargs.get('content_container_class')
+        image_container_class = kwargs.get('image_container_class')
+
+        if not all([
+            content_container_class,
+            image_container_class
+        ]):
+            return
+
+        content_container = parsed_html.body.find('div', attrs={'class': content_container_class})
+        paragraph = content_container.find('p')
+
+        image_container = parsed_html.body.find('div', attrs={'class': image_container_class})
+        image = image_container.find('img')
 
     return {
         'headline': headline.text.strip() if headline else '',
@@ -33,6 +51,13 @@ def parse_html(html, **kwargs):
 def crawl(url, **kwargs):
     response = requests.get(url)
     response.raise_for_status()
+    is_wikipedia_page = re.compile(r'.*(wikipedia.org)').match(url) is not None
+
+    if is_wikipedia_page:
+        kwargs.update({
+            'is_wikipedia_page': is_wikipedia_page
+        })
+
     data = parse_html(response.content, **kwargs)
 
     # TODOs: Persist data
