@@ -2,8 +2,13 @@
 
 from __future__ import unicode_literals
 
+import json
+import os
 import requests
 import webcrawler
+
+from datetime import datetime
+from slugify import slugify
 
 MOCK_HTML = (
     '<html>'
@@ -67,6 +72,12 @@ def test_parse_wikipedia_page():
     )
     assert data.get('image_url') == '//upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Donald_Trump_Pentagon_2017.jpg/220px-Donald_Trump_Pentagon_2017.jpg'  # noqa
 
+    filename = '{}-{}.json'.format(
+        datetime.now().strftime('%Y-%m-%d-%H:%M'),
+        slugify(data.get('headline'))
+    )
+    os.remove('data/{}'.format(filename))
+
 
 def test_parse_generic_page_without_container_classes():
     data = webcrawler.crawl(
@@ -99,3 +110,25 @@ def test_parse_generic_page_with_container_classes():
         'lluvia no es torrencial, pero duele.'
     )
     assert data.get('image_url') == '//as01.epimg.net/motor/imagenes/2017/07/15/formula_1/1500113537_936620_1500113633_noticia_normal.jpg'  # noqa
+
+    filename = '{}-{}.json'.format(
+        datetime.now().strftime('%Y-%m-%d-%H:%M'),
+        slugify(data.get('headline'))
+    )
+    os.remove('data/{}'.format(filename))
+
+
+def test_persisted_data():
+    data = webcrawler.crawl('https://en.wikipedia.org/wiki/Donald_Trump')
+    filename = '{}-{}.json'.format(
+        datetime.now().strftime('%Y-%m-%d-%H:%M'),
+        slugify(data.get('headline'))
+    )
+
+    with open('data/{}'.format(filename), 'r') as file:
+        persisted_data = json.loads(file.read())
+        assert data.get('headline') == persisted_data.get('headline')
+        assert data.get('paragraph') == persisted_data.get('paragraph')
+        assert data.get('image_url') == persisted_data.get('image_url')
+
+    os.remove('data/{}'.format(filename))

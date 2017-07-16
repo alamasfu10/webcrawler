@@ -1,7 +1,11 @@
+import json
+import os
 import re
 import requests
 
 from bs4 import BeautifulSoup
+from datetime import datetime
+from slugify import slugify
 
 
 def parse_html(html, **kwargs):
@@ -60,6 +64,20 @@ def crawl(url, **kwargs):
 
     data = parse_html(response.content, **kwargs)
 
-    # TODOs: Persist data
+    if not data:
+        return
+
+    # Persist Data
+    if not os.path.exists('data'):
+        os.makedirs('data')
+
+    filename = '{}-{}.json'.format(
+        datetime.now().strftime('%Y-%m-%d-%H:%M'),
+        slugify(data.get('headline'))
+    )
+
+    with open('data/{}'.format(filename), 'w') as file:  # noqa
+        json.dump(data, file)
+        file.close()
 
     return data
