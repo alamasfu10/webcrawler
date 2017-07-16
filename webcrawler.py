@@ -39,10 +39,16 @@ def parse_html(html, **kwargs):
         ]):
             return
 
-        content_container = parsed_html.body.find('div', attrs={'class': content_container_class})
+        content_container = parsed_html.body.find(
+            'div',
+            attrs={'class': content_container_class}
+        )
         paragraph = content_container.find('p')
 
-        image_container = parsed_html.body.find('div', attrs={'class': image_container_class})
+        image_container = parsed_html.body.find(
+            'div',
+            attrs={'class': image_container_class}
+        )
         image = image_container.find('img')
 
     return {

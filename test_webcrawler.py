@@ -91,7 +91,7 @@ def test_parse_generic_page_with_container_classes():
     data = webcrawler.crawl(
         'https://as.com/motor/2017/07/15/formula_1/1500113537_936620.html',
         content_container_class='int-articulo',
-        image_container_class='cont-img-dest-art'
+        image_container_class='cont-img-dest-art',
     )
 
     assert data is not None
